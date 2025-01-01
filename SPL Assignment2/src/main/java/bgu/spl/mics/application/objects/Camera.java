@@ -11,11 +11,12 @@ public class Camera {
     private STATUS status;
     private final List<StampedDetectedObjects> stampedDetectedObjectsList;
     private StampedDetectedObjects MostRecent;
+    private final int terminationTime;
 
-
-    public Camera(int id, int frequency, List<StampedDetectedObjects> detectedObjectList) {
+    public Camera(int id, int frequency, List<StampedDetectedObjects> detectedObjectList, int terminationTime) {
         this.id = id;
         this.frequency = frequency;
+        this.terminationTime = terminationTime;
         this.status = STATUS.UP;
         this.stampedDetectedObjectsList = detectedObjectList;
     }
@@ -55,4 +56,7 @@ public class Camera {
         return null;
     }
 
+    public int getTerminationTime() {
+        return terminationTime;
+    }
 }

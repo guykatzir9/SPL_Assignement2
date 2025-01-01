@@ -1,10 +1,7 @@
 package bgu.spl.mics.application.services;
 
 import bgu.spl.mics.MicroService;
-import bgu.spl.mics.application.messages.CrashedBroadcast;
-import bgu.spl.mics.application.messages.DetectObjectsEvent;
-import bgu.spl.mics.application.messages.TerminatedBroadcast;
-import bgu.spl.mics.application.messages.TickBroadcast;
+import bgu.spl.mics.application.messages.*;
 import bgu.spl.mics.application.objects.*;
 
 import java.util.List;
@@ -45,7 +42,6 @@ public class CameraService extends MicroService {
         subscribeBroadcast(TickBroadcast.class, tickBroadcast -> {
             int currTick = tickBroadcast.getTick();
             int relevantDetectionTick = currTick - Mycamera.getFrequency();
-            if (Mycamera.isUP()) {
                 // create an event with the StampedDetectionObjects matches to the relevant Tick and send it
                 StampedDetectedObjects TickObjects = Mycamera.getObjectAtTick(relevantDetectionTick);
                 if (TickObjects != null) {
@@ -68,9 +64,13 @@ public class CameraService extends MicroService {
                     // if TickObjects includes no error we will send it as an event
                     DetectObjectsEvent TickObjectsEvent = new DetectObjectsEvent(TickObjects , relevantDetectionTick, currTick);
                     sendEvent(TickObjectsEvent);
+                    // notify the service manager to decrease the number of detectedObjectsEvent remain to send
+                    sendBroadcast(new DetectedObjectsBroadcast());
                 }
+            if (currTick == Mycamera.getTerminationTime()){
+                sendBroadcast(new SensorTerminationBroadcast(this));
+                terminate();
             }
-
         } );
 
         // subscribe to TerminatedBroadcast. callback: set the status down

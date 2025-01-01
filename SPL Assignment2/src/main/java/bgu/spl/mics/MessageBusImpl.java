@@ -88,10 +88,10 @@ public class MessageBusImpl implements MessageBus {
 		if (subscriptions == null || subscriptions.isEmpty()) {
 			return null;
 		}
-		MicroService TempMs = subscriptions.remove(0);
-		subscriptions.add(TempMs);
+		MicroService TempMS = subscriptions.remove(0);
+		subscriptions.add(TempMS);
 		try {
-			queues.get(TempMs).put(e);
+			queues.get(TempMS).put(e);
 		} catch (InterruptedException err) {
 			Thread.currentThread().interrupt();
 		}
@@ -99,6 +99,7 @@ public class MessageBusImpl implements MessageBus {
 		futures.put(e, future);
 		return future;
 	}
+
 
 	@Override
 	public void register(MicroService m) {

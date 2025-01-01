@@ -12,7 +12,7 @@ import java.util.List;
  * for calculations based on TrackObjectsEvent it has received
  */
 
-public class PoseEvent implements Event<Pose> {
+public class PoseEvent implements Event<Boolean> {
     private final Pose pose;
 
     public PoseEvent(Pose pose) {

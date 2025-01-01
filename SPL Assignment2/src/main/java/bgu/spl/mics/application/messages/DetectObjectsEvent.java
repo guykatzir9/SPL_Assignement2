@@ -11,7 +11,7 @@ import java.util.List;
  * LiDAR workers to process detected objects
  */
 
-public class DetectObjectsEvent implements Event<List<DetectedObject>> {
+public class DetectObjectsEvent implements Event<Boolean> {
     private final StampedDetectedObjects stampedDetectedObjects;
     private final int sendingTick;
     private final int DetectionTick;

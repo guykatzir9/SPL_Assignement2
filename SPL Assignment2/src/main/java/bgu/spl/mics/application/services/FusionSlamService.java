@@ -39,23 +39,19 @@ public class FusionSlamService extends MicroService {
         subscribeBroadcast(TickBroadcast.class, tickBroadcast -> {});
 
         // subscribe to PoseEvent. callback: add the event pose to the fusion slam poses list.
-        subscribeEvent(PoseEvent.class, poseEvent -> fusionSlam.updatePose(poseEvent.getPose()));
+        subscribeEvent(PoseEvent.class, poseEvent -> {
+            fusionSlam.updatePose(poseEvent.getPose());
+            complete(poseEvent,true);
+        });
 
 
         subscribeEvent(TrackedObjectsEvent.class, TrackedEvent ->{
             List<LandMark> globalLandmarks = fusionSlam.transformToGlobal(TrackedEvent.getTrackedObjects(), fusionSlam.getPoses().get(fusionSlam.getPoses().size() - 1));
             fusionSlam.updateLandmarks(globalLandmarks);
-
+            // notify the service manager
+            sendBroadcast(new LandmarkBroadcast());
+            complete(TrackedEvent,true);
         });
-
-
-        // subscribe to TerminatedBroadcast. callback: set the status down
-        // (planned termination) and terminate the MicroService
-        subscribeBroadcast(TerminatedBroadcast.class, terminated -> {
-            fusionSlam.setStatus(STATUS.DOWN);
-            this.terminate();
-        });
-
 
         // subscribe to CrashedBroadcast. callback: set the status to error
         // (unplanned termination) and terminate the MicroService
@@ -64,5 +60,18 @@ public class FusionSlamService extends MicroService {
             this.terminate();
         });
 
+        // subscribe to TerminatedBroadcast. callback: set the status down
+        // (planned termination) and terminate the MicroService
+        subscribeBroadcast(TerminatedBroadcast.class, terminated -> {
+            fusionSlam.setStatus(STATUS.DOWN);
+            JsonFileWriter.writeObjectToJsonFile(new Output(),Config.getOutputFilePath());
+            this.terminate();
+        });
+
+        subscribeBroadcast(OutputBroadcast.class, b->{
+            fusionSlam.setStatus(STATUS.DOWN);
+            JsonFileWriter.writeObjectToJsonFile(new Output(),Config.getOutputFilePath());
+            terminate();
+        });
     }
 }

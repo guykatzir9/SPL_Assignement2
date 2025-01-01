@@ -17,7 +17,7 @@ public class LiDarWorkerTracker {
     private final int frequency;
     private STATUS status;
     private List<TrackedObject> lastTrackedObjects;
-    private final Map<Integer, List<TrackedObject>> TrackObjectsMap;
+    private final Map<Integer, List<List<TrackedObject>>> TrackObjectsMap;
     private int lastSentTick;
     private int lastDetectionTick;
     private final LiDarDataBase liDarDataBase = LiDarDataBase.getInstance("example_input_2/lidar_data.json");
@@ -74,19 +74,19 @@ public class LiDarWorkerTracker {
         this.lastSentTick = lastSentTick;
     }
 
-    public Map<Integer, List<TrackedObject>> getTrackObjectsMap() {
+    public Map<Integer, List<List<TrackedObject>>> getTrackObjectsMap() {
         return TrackObjectsMap;
     }
 
     public void addToMap(int time, List<TrackedObject> list) {
 
         if (!TrackObjectsMap.containsKey(time)) {
-            this.TrackObjectsMap.put(time, list);
-        } else {
-            // merge the list so they will be attached to the same key - preserving unique keys
-            for (TrackedObject TO : list) {
-                TrackObjectsMap.get(time).add(TO);
-            }
+            List<List<TrackedObject>> TempList = new ArrayList<>();
+            TempList.add(list);
+            this.TrackObjectsMap.put(time, TempList);
+        }
+        else {
+            this.TrackObjectsMap.get(time).add(list);
         }
     }
 

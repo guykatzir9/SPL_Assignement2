@@ -17,7 +17,6 @@ import java.util.HashMap;
  * message-queue (see {@link MessageBus#register(bgu.spl.mics.MicroService)}
  * method). The abstract MicroService stores this callback together with the
  * type of the message is related to.
- * 
  * Only private fields and methods may be added to this class.
  * <p>
  */
@@ -27,6 +26,7 @@ public abstract class MicroService implements Runnable {
     private final String name;
     private MessageBusImpl MessageBus = MessageBusImpl.getInstance();
     private final Map <Class<? extends Message>,Callback<?>> Callbacks = new HashMap<>();
+    private int EventsInQueue;
 
 
     /**
@@ -35,6 +35,7 @@ public abstract class MicroService implements Runnable {
      */
     public MicroService(String name) {
         this.name = name;
+        this.EventsInQueue = 0;
     }
 
     /**

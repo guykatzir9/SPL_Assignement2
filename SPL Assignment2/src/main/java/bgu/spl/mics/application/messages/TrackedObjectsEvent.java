@@ -11,7 +11,7 @@ import java.util.List;
  * service with a request to process the Tracked objects for mapping
  */
 
-public class TrackedObjectsEvent implements Event<List<TrackedObject>> {
+public class TrackedObjectsEvent implements Event<Boolean> {
     private final List<TrackedObject> trackedObjects;
     private final int Tick;
 
