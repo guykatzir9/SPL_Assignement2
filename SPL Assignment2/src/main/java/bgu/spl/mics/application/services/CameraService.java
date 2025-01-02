@@ -41,35 +41,36 @@ public class CameraService extends MicroService {
 
         subscribeBroadcast(TickBroadcast.class, tickBroadcast -> {
             int currTick = tickBroadcast.getTick();
-            int relevantDetectionTick = currTick - Mycamera.getFrequency();
+            // checking fo an error at this current tick
+            StampedDetectedObjects currentTickObjects = Mycamera.getObjectAtTick(currTick);
+            // checking for error
+            for (DetectedObject DO : currentTickObjects.getDetectedObjects()) {
+                if (DO.getId().equals("ERROR")) {
+                    // create an OutputError file, send CrashedBroadcast,set status to error and terminate
+                    OutputError error = new OutputError(DO.getDescription(), "camera" + Mycamera.getId());
+                    JsonFileWriter.writeObjectToJsonFile(error, Config.getOutputFilePath());
+                    sendBroadcast(new CrashedBroadcast(this.getName()));
+                    Mycamera.setStatus(STATUS.ERROR);
+                    this.terminate();
+                }
+            }
+            if (Mycamera.isUP()) {
+                int relevantDetectionTick = currTick - Mycamera.getFrequency();
                 // create an event with the StampedDetectionObjects matches to the relevant Tick and send it
                 StampedDetectedObjects TickObjects = Mycamera.getObjectAtTick(relevantDetectionTick);
                 if (TickObjects != null) {
-
-                    // updating the camera last frames before checking them if there is error
+                    // updating the camera last frames and the statistics before sending the event
                     LastFrames.getInstance().setCameras( "camera" + Mycamera.getId() , TickObjects );
-                    // checking for error
-                    for (DetectedObject DO : TickObjects.getDetectedObjects()) {
-                        if (DO.getId().equals("ERROR")) {
-                            // create an OutputError file, send CrashedBroadcast,set status to error and terminate
-                            OutputError error = new OutputError(DO.getDescription(), "camera" + Mycamera.getId());
-                            JsonFileWriter.writeObjectToJsonFile( error , Config.getOutputFilePath());
-                            sendBroadcast(new CrashedBroadcast(this.getName()));
-                            Mycamera.setStatus(STATUS.ERROR);
-                            this.terminate();
-                        }
-                        // if it is not an error object we will increment the total detected objects.
-                        StatisticalFolder.getInstance().incrementNumDetectedObjects(1);
-                    }
-                    // if TickObjects includes no error we will send it as an event
+                    StatisticalFolder.getInstance().incrementNumDetectedObjects(TickObjects.getDetectedObjects().size());
                     DetectObjectsEvent TickObjectsEvent = new DetectObjectsEvent(TickObjects , relevantDetectionTick, currTick);
                     sendEvent(TickObjectsEvent);
                     // notify the service manager to decrease the number of detectedObjectsEvent remain to send
                     sendBroadcast(new DetectedObjectsBroadcast());
                 }
-            if (currTick == Mycamera.getTerminationTime()){
-                sendBroadcast(new SensorTerminationBroadcast(this));
-                terminate();
+                if (currTick == Mycamera.getTerminationTime()){
+                    sendBroadcast(new SensorTerminationBroadcast(this));
+                    terminate();
+                }
             }
         } );
 

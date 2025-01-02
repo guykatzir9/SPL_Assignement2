@@ -34,6 +34,10 @@ public class LiDarWorkerTracker {
 
     }
 
+    public LiDarDataBase getLiDarDataBase() {
+        return liDarDataBase;
+    }
+
     public int getId() {
         return id;
     }
@@ -104,5 +108,4 @@ public class LiDarWorkerTracker {
         }
         return output;
     }
-
 }

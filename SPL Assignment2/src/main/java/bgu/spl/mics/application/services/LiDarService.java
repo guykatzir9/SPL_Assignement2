@@ -41,46 +41,47 @@ public class LiDarService extends MicroService {
 
         subscribeBroadcast(TickBroadcast.class, tickBroadcast -> {
             int currTick = tickBroadcast.getTick();
-            for (Integer LiDarIsReady : MyLiDar.getTrackObjectsMap().keySet()) {
-                // extracting the list of lists in the key lidar is ready
-                List<List<TrackedObject>> currentList = MyLiDar.getTrackObjectsMap().get(LiDarIsReady);
-                for (List<TrackedObject> tempList : currentList ) {
-                    //extracting the processed time from the first trackedObject in this list
-                    int processedTime = tempList.get(0).getProcessedTime();
-                    // conditions if temp list can be sent as an event now
-                    if (LiDarIsReady < processedTime || LiDarIsReady == currTick) {
-                        //updating my lidar lastTrackedObjects field
-                        MyLiDar.setLastTrackedObjects(tempList);
-                        // updating last frames before checking for an error.
-                        LastFrames.getInstance().setLiDars("LiDar" + MyLiDar.getId(), MyLiDar.getLastTrackedObjects());
-                        // checking for an error
-                        for (TrackedObject TO : tempList) {
-                            if (TO.getId().equals("ERROR")) {
-                                // create an OutputError file, send CrashedBroadcast,set status to error and terminate
-                                OutputError error = new OutputError(TO.getDescription(), "LiDar" + MyLiDar.getId());
-                                JsonFileWriter.writeObjectToJsonFile(error, Config.getOutputFilePath());
-                                sendBroadcast(new CrashedBroadcast(this.getName()));
-                                MyLiDar.setStatus(STATUS.ERROR);
-                                this.terminate();
+            // checking for an error at this tick
+            if (MyLiDar.getLiDarDataBase().ErrorAtTick(currTick)) {
+                // create an OutputError file, send CrashedBroadcast,set status to error and terminate
+                OutputError error = new OutputError("connection to LiDar lost", "LiDar" + MyLiDar.getId());
+                JsonFileWriter.writeObjectToJsonFile(error, Config.getOutputFilePath());
+                sendBroadcast(new CrashedBroadcast(this.getName()));
+                MyLiDar.setStatus(STATUS.ERROR);
+                this.terminate();
+            }
+            if (MyLiDar.isUp()) {
+                for (Integer LiDarIsReady : MyLiDar.getTrackObjectsMap().keySet()) {
+                    // extracting the list of lists in the key lidar is ready
+                    List<List<TrackedObject>> currentList = MyLiDar.getTrackObjectsMap().get(LiDarIsReady);
+                    for (List<TrackedObject> tempList : currentList ) {
+                        //extracting the processed time from the first trackedObject in this list
+                        int processedTime = tempList.get(0).getProcessedTime();
+                        // conditions if temp list can be sent as an event now
+                        if (LiDarIsReady < processedTime || LiDarIsReady == currTick) {
+                            //updating my lidar lastTrackedObjects field
+                            MyLiDar.setLastTrackedObjects(tempList);
+                            // updating last frames for this LiDar
+                            LastFrames.getInstance().setLiDars("LiDar" + MyLiDar.getId(), MyLiDar.getLastTrackedObjects());
+                            // increment the total Tracked objects before sending the event
+                            StatisticalFolder.getInstance().incrementNumTrackedObjects(tempList.size());
+                            // extracting detection time of all those TrackedObjects. this time will
+                            // be equal to all of them because detectionTime + lidar freq = LiDarIsReady
+                            int detectionTime = LiDarIsReady - MyLiDar.getFrequency();
+                            TrackedObjectsEvent tempTrackedObjectsEvent = new TrackedObjectsEvent(tempList, detectionTime);
+                            sendEvent(tempTrackedObjectsEvent);
+                            // notify the service manager
+                            sendBroadcast(new TrackedObjectsBroadcast());
+                            currentList.remove(tempList);
+                            if (currentList.isEmpty()) {
+                                // remove those TrackObjects from the map of TrackObjects need to be sent.
+                                MyLiDar.getTrackObjectsMap().remove(LiDarIsReady);
                             }
-                            // if it is not an error object we will increment the total Tracked objects.
-                            StatisticalFolder.getInstance().incrementNumTrackedObjects(1);
-                        }
-                        // if tempList includes no errors we will send it as an event.
-                        // extracting detection time of all those TrackedObjects. this time will
-                        // be equal to all of them because detectionTime + lidar freq = LiDarIsReady
-                        int detectionTime = LiDarIsReady - MyLiDar.getFrequency();
-                        TrackedObjectsEvent tempTrackedObjectsEvent = new TrackedObjectsEvent(tempList, detectionTime);
-                        sendEvent(tempTrackedObjectsEvent);
-                        // notify the service manager
-                        sendBroadcast(new TrackedObjectsBroadcast());
-                        currentList.remove(tempList);
-                        if (currentList.isEmpty()) {
-                            // remove those TrackObjects from the map of TrackObjects need to be sent.
-                            MyLiDar.getTrackObjectsMap().remove(LiDarIsReady);
                         }
                     }
+
                 }
+
             }
         });
 

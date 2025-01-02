@@ -35,18 +35,13 @@ public class LastFrames {
         }
     }
 
-    public void setLiDars(String string , List<TrackedObject> list) {
-        if (LiDars.containsKey(string))
-            LiDars.replace(string , list);
+    public void setLiDars(String LidarId , List<TrackedObject> list) {
+        // check if this LidarId is already in the map
+        if (LiDars.containsKey(LidarId))
+            LiDars.replace(LidarId , list);
 
         else {
-            LiDars.put(string, list);
+            LiDars.put(LidarId, list);
         }
     }
-
-
-
-
-
-
 }

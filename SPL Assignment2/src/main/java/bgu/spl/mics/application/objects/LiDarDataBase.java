@@ -52,5 +52,12 @@ public class LiDarDataBase {
         return null;
     }
 
-
+    public Boolean ErrorAtTick(int tick) {
+        for (StampedCloudPoints SCP : StampedCloudPoints) {
+            if (SCP.getTime() == tick && SCP.getId().equals("ERROR")) {
+                return true;
+            }
+        }
+        return false;
+    }
 }
