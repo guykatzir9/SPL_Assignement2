@@ -20,7 +20,7 @@ public class LiDarWorkerTracker {
     private final Map<Integer, List<List<TrackedObject>>> TrackObjectsMap;
     private int lastSentTick;
     private int lastDetectionTick;
-    private final LiDarDataBase liDarDataBase = LiDarDataBase.getInstance("example_input_2/lidar_data.json");
+    private final LiDarDataBase liDarDataBase = LiDarDataBase.getInstance(Config.getLidarDataBasePath());
 
 
     public LiDarWorkerTracker(int id, int freq) {
@@ -99,6 +99,8 @@ public class LiDarWorkerTracker {
         StampedDetectedObjects stampedDetectedObjects = event.getStampedDetectedObjects();
         List<TrackedObject> output = new ArrayList<>();
         for (DetectedObject DO : stampedDetectedObjects.getDetectedObjects()) {
+
+            // creating 1 TrackedObject from 1 DetectedObject
             String id = DO.getId();
             int Tick = event.getDetectionTick();
             int processTime = event.getSendingTick();
@@ -106,6 +108,9 @@ public class LiDarWorkerTracker {
             List<CloudPoint> cloudPoints = liDarDataBase.getCloudPoints(id, Tick);
             output.add(new TrackedObject(id, Tick, desc, cloudPoints,processTime));
         }
+
+        System.out.println("D event size = " + event.getStampedDetectedObjects().getDetectedObjects().size() + " T event size = " + output.size());
+
         return output;
     }
 }

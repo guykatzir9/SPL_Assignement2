@@ -11,12 +11,11 @@ public class GPSIMU {
 
     private int currentTick;
     private STATUS status;
-    private final List<Pose> PoseList = DataLoader.loadPoseData("example_input_2/pose_data.json");
+    private final List<Pose> PoseList = DataLoader.loadPoseData(Config.getPoseJsonFile());
 
-    public GPSIMU (int currentTick) {
-
-        this.currentTick = currentTick;
+    public GPSIMU () {
         this.status = STATUS.UP;
+        this.currentTick = 0;
     }
 
     public int getCurrentTick() {

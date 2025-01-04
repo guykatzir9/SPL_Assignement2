@@ -6,6 +6,7 @@ import bgu.spl.mics.application.objects.STATUS;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
 
 public class SensorManagerService extends MicroService {
 
@@ -14,18 +15,20 @@ public class SensorManagerService extends MicroService {
     private int RemainingDetectedEvents;
     private int RemainingTrackedEvents;
     private int RemainingFusionEvents;
+    private final CountDownLatch latch;
 
     // gets as an input the number of remaining detectedObjectsEvents to send
     // extracting it from the camera data json at the beginning of the program execution
     //in our logic each DetectedObjectsEvent maps to 1 TrackedObjectsEvent maps to 1 "FusionEvent"
 
-    public SensorManagerService (int totalEvents) {
+    public SensorManagerService (int totalEvents, CountDownLatch latch) {
         super("SensorManagerService");
         this.RemainingDetectedEvents = totalEvents;
         this.RemainingTrackedEvents = totalEvents;
         this.RemainingFusionEvents = totalEvents;
         this.SensorStatus = new HashMap<>();
         this.UpSensors = 0;
+        this.latch = latch;
     }
 
     public void AddSensor (MicroService microService) {
@@ -74,5 +77,21 @@ public class SensorManagerService extends MicroService {
             }
         });
 
+        subscribeBroadcast(TickBroadcast.class, b ->{
+            System.out.println(SensorStatus.toString());
+        });
+
+        subscribeBroadcast(CrashedBroadcast.class, b ->{
+            terminate();
+        });
+
+        subscribeBroadcast(TerminatedBroadcast.class , b -> {
+            terminate();
+        });
+
+        subscribeBroadcast(stopTimeBroadcast.class, b->{
+            terminate();
+        });
+        latch.countDown();
     }
 }

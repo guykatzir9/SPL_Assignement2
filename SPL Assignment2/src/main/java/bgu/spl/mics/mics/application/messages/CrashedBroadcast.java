@@ -12,6 +12,7 @@ public class CrashedBroadcast implements Broadcast {
 
     public CrashedBroadcast(String senderName) {
         this.senderName = senderName;
+        System.out.println(senderName + "Crashed");
     }
 
     public String getSenderName() {

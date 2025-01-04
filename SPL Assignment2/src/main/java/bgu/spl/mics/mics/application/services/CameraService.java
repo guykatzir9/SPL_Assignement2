@@ -4,7 +4,7 @@ import bgu.spl.mics.MicroService;
 import bgu.spl.mics.application.messages.*;
 import bgu.spl.mics.application.objects.*;
 
-import java.util.List;
+import java.util.concurrent.CountDownLatch;
 
 /**
  * CameraService is responsible for processing data from the camera and
@@ -15,16 +15,18 @@ import java.util.List;
  */
 public class CameraService extends MicroService {
     private final Camera Mycamera;
+    private final CountDownLatch latch;
 
     /**
-     *
      * Constructor for CameraService.
      *
      * @param camera The Camera object that this service will use to detect objects.
+     * @param latch
      */
-    public CameraService(Camera camera) {
+    public CameraService(Camera camera, CountDownLatch latch) {
         super("camera service" + camera.getId());
         this.Mycamera = camera;
+        this.latch = latch;
 
     }
 
@@ -43,15 +45,18 @@ public class CameraService extends MicroService {
             int currTick = tickBroadcast.getTick();
             // checking fo an error at this current tick
             StampedDetectedObjects currentTickObjects = Mycamera.getObjectAtTick(currTick);
-            // checking for error
-            for (DetectedObject DO : currentTickObjects.getDetectedObjects()) {
-                if (DO.getId().equals("ERROR")) {
-                    // create an OutputError file, send CrashedBroadcast,set status to error and terminate
-                    OutputError error = new OutputError(DO.getDescription(), "camera" + Mycamera.getId());
-                    JsonFileWriter.writeObjectToJsonFile(error, Config.getOutputFilePath());
-                    sendBroadcast(new CrashedBroadcast(this.getName()));
-                    Mycamera.setStatus(STATUS.ERROR);
-                    this.terminate();
+            if(currentTickObjects != null ){
+                System.out.println("camera" + Mycamera.getId() + " Detected objects in current tick: " +  currentTickObjects);
+                // checking for error
+                for (DetectedObject DO : currentTickObjects.getDetectedObjects()) {
+                    if (DO.getId().equals("ERROR")) {
+                        // create an OutputError file, send CrashedBroadcast,set status to error and terminate
+                        OutputError error = new OutputError(DO.getDescription(), "camera" + Mycamera.getId());
+                        JsonFileWriter.writeObjectToJsonFileInSameDirectory(error, Config.getConfigurationPath(), "Error_output.json");
+                        sendBroadcast(new CrashedBroadcast(this.getName()));
+                        Mycamera.setStatus(STATUS.ERROR);
+                        this.terminate();
+                    }
                 }
             }
             if (Mycamera.isUP()) {
@@ -62,7 +67,8 @@ public class CameraService extends MicroService {
                     // updating the camera last frames and the statistics before sending the event
                     LastFrames.getInstance().setCameras( "camera" + Mycamera.getId() , TickObjects );
                     StatisticalFolder.getInstance().incrementNumDetectedObjects(TickObjects.getDetectedObjects().size());
-                    DetectObjectsEvent TickObjectsEvent = new DetectObjectsEvent(TickObjects , relevantDetectionTick, currTick);
+                    DetectObjectsEvent TickObjectsEvent = new DetectObjectsEvent(TickObjects , relevantDetectionTick, currTick, "camera" + Mycamera.getId());
+                    System.out.println("camera" + Mycamera.getId() + "Send a DetectedObjects Event" + TickObjectsEvent);
                     sendEvent(TickObjectsEvent);
                     // notify the service manager to decrease the number of detectedObjectsEvent remain to send
                     sendBroadcast(new DetectedObjectsBroadcast());
@@ -88,5 +94,6 @@ public class CameraService extends MicroService {
             Mycamera.setStatus(STATUS.ERROR);
             this.terminate();
         });
+        latch.countDown();
     }
 }

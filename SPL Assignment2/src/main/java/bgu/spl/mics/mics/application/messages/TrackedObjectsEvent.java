@@ -15,9 +15,11 @@ public class TrackedObjectsEvent implements Event<Boolean> {
     private final List<TrackedObject> trackedObjects;
     private final int Tick;
 
-    public TrackedObjectsEvent(List<TrackedObject> trackedObjects, int Tick) {
+    public TrackedObjectsEvent(List<TrackedObject> trackedObjects, int Tick, String sender) {
         this.trackedObjects = trackedObjects;
         this.Tick = Tick;
+
+        System.out.println(sender + " Tracked objects at tick: " + this.Tick + " Tracked objects: " + this.trackedObjects);
     }
 
     public List<TrackedObject> getTrackedObjects () {

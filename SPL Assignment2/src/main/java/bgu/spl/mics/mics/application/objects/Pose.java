@@ -9,18 +9,22 @@ public class Pose {
     private float x;
     private float y;
     private float yaw;
-    private int Time;
+    private int time;
 
 
     public Pose(float x, float y, float yaw, int time) {
         this.x = x;
         this.y = y;
         this.yaw = yaw;
-        this.Time = time;
+        this.time = time;
+    }
+
+    public float getYawInRadians() {
+        return (yaw*(float)Math.PI/180);
     }
 
     public int getTime() {
-        return Time;
+        return time;
     }
 
     public float getX() {
@@ -33,6 +37,10 @@ public class Pose {
 
     public float getYaw() {
         return yaw;
+    }
+
+    public String toString(){
+        return "Time: " + this.time + "X: " + this.x + "Y: " + this.y + "Yaw: " + this.yaw;
     }
 }
 

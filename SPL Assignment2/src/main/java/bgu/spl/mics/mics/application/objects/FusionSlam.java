@@ -31,6 +31,15 @@ public class FusionSlam {
         return FusionSlamHolder.instance;
     }
 
+    public Pose getPoseAtTick(int Tick) {
+        for (Pose po : Poses) {
+            if (po.getTime() == Tick) {
+                return po;
+            }
+        }
+        return null;
+    }
+
     public List<LandMark> getLandMarks() {
         return landMarks;
     }
@@ -73,10 +82,10 @@ public class FusionSlam {
      * apply transformation on the coordinates of trackedObjects transforming
      * them from local to global using the current pose of the robot.
      * @param trackedObjects The list of tracked objects to transform.
-     * @param currentPose    The current pose of the robot.
+     * @param detectionPose    The current pose of the robot.
      * @return A list of global landmarks.
      */
-    public List<LandMark> transformToGlobal(List<TrackedObject> trackedObjects, Pose currentPose) {
+    public List<LandMark> transformToGlobal(List<TrackedObject> trackedObjects, Pose detectionPose) {
         List<LandMark> globalLandmarks = new ArrayList<>();
 
         for (TrackedObject trackedObject : trackedObjects) {
@@ -86,8 +95,8 @@ public class FusionSlam {
             for (CloudPoint point : trackedObject.getCoordinates()) {
 
                 // transformation: using rotation matrix and adding the x y of the robot's current pose.
-                double globalX = point.getX() * Math.cos(currentPose.getYaw()) - point.getY() * Math.sin(currentPose.getYaw()) + currentPose.getX();
-                double globalY = point.getX() * Math.sin(currentPose.getYaw()) + point.getY() * Math.cos(currentPose.getYaw()) + currentPose.getY();
+                double globalX = point.getX() * Math.cos(detectionPose.getYawInRadians()) - point.getY() * Math.sin(detectionPose.getYawInRadians()) + detectionPose.getX();
+                double globalY = point.getX() * Math.sin(detectionPose.getYawInRadians()) + point.getY() * Math.cos(detectionPose.getYawInRadians()) + detectionPose.getY();
                 globalPoints.add(new CloudPoint(globalX, globalY));
             }
             globalLandmarks.add(new LandMark(id, desc, globalPoints));
@@ -95,6 +104,8 @@ public class FusionSlam {
 
         return globalLandmarks;
     }
+
+
 
 
 

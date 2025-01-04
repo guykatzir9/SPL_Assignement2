@@ -61,6 +61,7 @@ public abstract class MicroService implements Runnable {
      */
     protected final <T, E extends Event<T>> void subscribeEvent(Class<E> type, Callback<E> callback) {
 
+        System.out.println(this + " Subscribed to Event " + type);
         MessageBus.subscribeEvent(type,this);
         this.Callbacks.put(type,callback);
     }
@@ -86,7 +87,7 @@ public abstract class MicroService implements Runnable {
      *                 queue.
      */
     protected final <B extends Broadcast> void subscribeBroadcast(Class<B> type, Callback<B> callback) {
-
+        System.out.println(this + " Subscribed to Broadcast " + type);
         MessageBus.subscribeBroadcast(type,this);
         this.Callbacks.put(type,callback);
     }
@@ -156,16 +157,18 @@ public abstract class MicroService implements Runnable {
     }
 
     /**
-     * The entry point of the micro-service.
+     * The entry point of the microservice.
      * otherwise you will end up in an infinite loop.
      */
     @Override
     public final void run() {
         MessageBus.register(this);
+        System.out.println(this + "has registered");
         initialize();
         while (!terminated) {
             try {
             Message message = MessageBus.awaitMessage(this);
+            System.out.println(this.name + " now handles " +message.getClass());
             Callback callback = Callbacks.get(message.getClass());
 
             if (callback != null)

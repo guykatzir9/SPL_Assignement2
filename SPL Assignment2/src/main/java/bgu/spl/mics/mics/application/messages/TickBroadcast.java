@@ -13,6 +13,7 @@ public class TickBroadcast implements Broadcast {
 
     public TickBroadcast(int tick) {
         this.tick = tick;
+        System.out.println("Tick: " + this.tick);
     }
 
     public int getTick () {

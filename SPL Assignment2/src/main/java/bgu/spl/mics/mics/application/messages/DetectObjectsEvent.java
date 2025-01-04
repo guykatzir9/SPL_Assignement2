@@ -16,11 +16,11 @@ public class DetectObjectsEvent implements Event<Boolean> {
     private final int sendingTick;
     private final int DetectionTick;
 
-    public DetectObjectsEvent(StampedDetectedObjects detectedObjects , int detectionTick , int sendingTick) {
+    public DetectObjectsEvent(StampedDetectedObjects detectedObjects , int detectionTick , int sendingTick, String sender) {
         this.stampedDetectedObjects = detectedObjects;
         this.DetectionTick = detectionTick;
         this.sendingTick = sendingTick;
-
+        System.out.println(sender + " Detected objects at tick :" + this.DetectionTick + " Detected objects: " + this.stampedDetectedObjects.getDetectedObjects());
     }
 
 

@@ -71,11 +71,14 @@ public class MessageBusImpl implements MessageBus {
 		if (subscribers != null) {
 			synchronized (subscribers) {
 				for (MicroService m : subscribers) {
-					try {
-						queues.get(m).put(b);
-					} catch (InterruptedException e) {
-						Thread.currentThread().interrupt();
+
+					if (m == null) {
+						System.out.println("Null MicroService found in subscribers");
+				}
+					if (queues.get(m) == null) {
+						System.out.println("Queue for MicroService " + m.getName() + " is null");
 					}
+					queues.get(m).offer(b);
 				}
 			}
 		}
@@ -89,12 +92,17 @@ public class MessageBusImpl implements MessageBus {
 			return null;
 		}
 		MicroService TempMS = subscriptions.remove(0);
+		System.out.println( TempMS.getName() + " received to his queue event " + e);
 		subscriptions.add(TempMS);
-		try {
-			queues.get(TempMS).put(e);
-		} catch (InterruptedException err) {
-			Thread.currentThread().interrupt();
+
+		if (TempMS == null) {
+			System.out.println("Null MicroService found in subscriptions");
 		}
+		if (queues.get(TempMS) == null) {
+			System.out.println("Queue for MicroService " + TempMS.getName() + " is null");
+		}
+
+		queues.get(TempMS).offer(e);
 		Future<T> future = new Future<>();
 		futures.put(e, future);
 		return future;
@@ -130,7 +138,6 @@ public class MessageBusImpl implements MessageBus {
 	public Message awaitMessage(MicroService m) throws InterruptedException {
 		if (!queues.containsKey(m))
 			throw new IllegalStateException("Microservice is not registered ");
-
 		BlockingQueue<Message> mQ = queues.get(m);
 			try {
 				Message output = mQ.take();

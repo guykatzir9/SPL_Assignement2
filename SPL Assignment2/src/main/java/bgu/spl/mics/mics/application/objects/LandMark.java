@@ -36,16 +36,26 @@ public class LandMark {
 
     public void refineLocation(List<CloudPoint> newCloudPoints) {
         List<CloudPoint> refinedCloudPoints = new ArrayList<>();
-        for (int i = 0; i < coordinates.size(); i++) {
+        int minSize = Math.min(coordinates.size(), newCloudPoints.size());
+
+        for (int i = 0; i < minSize; i++) {
             CloudPoint oldPoint = coordinates.get(i);
             CloudPoint newPoint = newCloudPoints.get(i);
 
-            // Calculate the average of each coordinate (ignoring Z)
             double avgX = (oldPoint.getX() + newPoint.getX()) / 2;
             double avgY = (oldPoint.getY() + newPoint.getY()) / 2;
 
             refinedCloudPoints.add(new CloudPoint(avgX, avgY));
         }
+
+        if (coordinates.size() > minSize) {
+            refinedCloudPoints.addAll(coordinates.subList(minSize, coordinates.size()));
+        }
+
+        else if (newCloudPoints.size() > minSize) {
+            refinedCloudPoints.addAll(newCloudPoints.subList(minSize, newCloudPoints.size()));
+        }
+
         this.coordinates = refinedCloudPoints;
     }
 }
